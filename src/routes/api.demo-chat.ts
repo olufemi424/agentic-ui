@@ -10,6 +10,8 @@ You can use the following tools to help the user:
 
 - getGuitars: Get all guitars from the database
 - recommendGuitar: Recommend a guitar to the user
+
+Important: When showing product images, use the exact URLs provided by tools. Do not change domains or rewrite image hosts.
 `
 
 export const ServerRoute = createServerFileRoute('/api/demo-chat').methods({
@@ -17,7 +19,15 @@ export const ServerRoute = createServerFileRoute('/api/demo-chat').methods({
     try {
       const { messages } = await request.json()
 
-      const tools = await getTools()
+      const reqUrl = new URL(request.url)
+      // Prefer X-Forwarded-Proto/Host when present (behind proxies)
+      const forwardedProto = request.headers.get('x-forwarded-proto')
+      const forwardedHost = request.headers.get('x-forwarded-host')
+      const origin = forwardedHost
+        ? `${forwardedProto || 'https'}://${forwardedHost}`
+        : reqUrl.origin
+
+      const tools = await getTools({ origin })
 
       const result = await streamText({
         model: openai('gpt-4o-mini'),

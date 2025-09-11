@@ -6,8 +6,13 @@ import guitars from "../data/example-guitars";
 const getGuitars = tool({
   description: "Get all products from the database",
   inputSchema: z.object({}),
-  execute: async () => {
-    return Promise.resolve(guitars);
+  execute: async (_input, _context) => {
+    const origin = (_context as unknown as { origin?: string })?.origin || "";
+    const products = guitars.map((guitar) => ({
+      ...guitar,
+      image: origin ? `${origin}${guitar.image}` : guitar.image,
+    }));
+    return Promise.resolve(products);
   },
 });
 
@@ -23,9 +28,22 @@ const recommendGuitar = tool({
   },
 });
 
-export default async function getTools() {
-  return {
-    getGuitars,
+export default async function getTools({ origin }: { origin?: string } = {}) {
+  // Bind origin into the tool execution context using closure over tool.execute via ai SDK context param
+  const withOrigin = {
+    getGuitars: tool({
+      description: getGuitars.description,
+      inputSchema: z.object({}),
+      execute: async (_input, _ctx) => {
+        const products = guitars.map((guitar) => ({
+          ...guitar,
+          image: origin ? `${origin}${guitar.image}` : guitar.image,
+        }));
+        return Promise.resolve(products);
+      },
+    }),
     recommendGuitar,
   };
+
+  return withOrigin;
 }

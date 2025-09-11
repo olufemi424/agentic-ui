@@ -10,6 +10,8 @@ export const server = new McpServer({
 export const transports: { [sessionId: string]: SSEServerTransport } = {}
 
 server.tool('getGuitars', {}, async ({}) => {
+  // We cannot reliably access request headers here without framework glue; keep relative paths
+  const origin = ''
   return {
     content: [
       {
@@ -20,7 +22,7 @@ server.tool('getGuitars', {}, async ({}) => {
             name: guitar.name,
             description: guitar.description,
             price: guitar.price,
-            image: `http://localhost:3000${guitar.image}`,
+            image: origin ? `${origin}${guitar.image}` : guitar.image,
           })),
         ),
       },

@@ -17,6 +17,29 @@ const TranscribeButton = lazy(() => import("@/components/transcribe-button"));
 import "../demo.index.css";
 import TTSButton from "@/components/tts-button";
 
+function normalizeImageSrc(src?: string): string | undefined {
+  if (!src) return src;
+  try {
+    const base =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "http://localhost";
+    const url = new URL(src, base);
+    const filename = url.pathname.split("/").pop() || "";
+    const isGuitarImage = /^example-guitar-.*\.(jpg|jpeg|png|webp)$/i.test(
+      filename
+    );
+    if (isGuitarImage) {
+      const origin =
+        typeof window !== "undefined" ? window.location.origin : url.origin;
+      return `${origin}/${filename}`;
+    }
+    return url.href;
+  } catch {
+    return src;
+  }
+}
+
 function InitalLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex-1 flex items-center justify-center px-4">
@@ -91,6 +114,11 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                             rehypeHighlight,
                             remarkGfm,
                           ]}
+                          components={{
+                            img: ({ src, ...props }) => (
+                              <img src={normalizeImageSrc(src)} {...props} />
+                            ),
+                          }}
                         >
                           {part.text}
                         </ReactMarkdown>
