@@ -6,7 +6,7 @@ To run this application:
 
 ```bash
 pnpm install
-pnpm start
+pnpm dev
 ```
 
 # Building For Production
@@ -33,21 +33,21 @@ This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
 # TanStack Chat Application
 
-Am example chat application built with TanStack Start, TanStack Store, and Claude AI.
+An example chat application built with TanStack Start, TanStack Store, and OpenAI (via ai-sdk).
 
 ## .env Updates
 
 ```env
-ANTHROPIC_API_KEY=your_anthropic_api_key
+OPENAI_API_KEY=your_openai_api_key
 ```
 
 ## ✨ Features
 
 ### AI Capabilities
-- 🤖 Powered by Claude 3.5 Sonnet 
+- 🤖 Powered by OpenAI gpt-4o-mini 
 - 📝 Rich markdown formatting with syntax highlighting
 - 🎯 Customizable system prompts for tailored AI behavior
-- 🔄 Real-time message updates and streaming responses (coming soon)
+- 🔄 Real-time message updates and streaming responses
 
 ### User Experience
 - 🎨 Modern UI with Tailwind CSS and Lucide icons
@@ -67,7 +67,7 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 - **Routing**: TanStack Router
 - **State Management**: TanStack Store
 - **Styling**: Tailwind CSS
-- **AI Integration**: Anthropic's Claude API
+- **AI Integration**: OpenAI via `@ai-sdk/openai`
 
 
 ## Routing
@@ -326,3 +326,154 @@ Files prefixed with `demo` can be safely deleted. They are there to provide a st
 # Learn More
 
 You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+
+
+
+---
+
+# Architecture & Data Flow
+
+This app wires a React chat UI to a server route that streams AI responses and exposes server-side tools for the model to call. A small product dataset (guitars) is used to demonstrate tool usage and image handling. The chat server uses OpenAI via `@ai-sdk/openai` with model `gpt-4o-mini`.
+
+## High-level diagram
+
+```
++---------------------+           +------------------------------+
+|  React Client (UI)  |           |  Server (TanStack Start)     |
+|  - Chat page        |  HTTP     |  - /api/demo-chat (POST)     |
+|  - Markdown render  +---------->+  - Tools (getGuitars, ...)   |
+|  - Tool UI cards    |  Stream   |  - AI provider (OpenAI)      |
++----------+----------+  (SSE)    +-------------------+----------+
+           ^                                               |
+           |                                               |
+           |                         Tools return product  |
+           |                         data w/ image URLs    v
+           |                                          +----+-----+
+           |                                          | Dataset  |
+           |                                          | guitars  |
+           |                                          +----------+
+```
+
+## Key pieces
+
+- Frontend routes
+  - `src/routes/index.tsx`: chat page (large UI), uses `useChat` to call `/api/demo-chat`. Renders Markdown and tool outputs.
+  - `src/components/example-AIAssistant.tsx`: compact assistant UI (toggleable), same message rendering patterns.
+  - `src/routes/example.guitars/*`: product listing and detail pages for the demo guitars.
+
+- Server route
+  - `src/routes/api.demo-chat.ts`: POST handler that:
+    - Parses incoming messages
+    - Derives `origin` from request headers/URL
+    - Instantiates tools with `{ origin }`
+    - Calls `streamText` with system prompt + tools
+    - Streams back UI messages to the client
+
+- Tools and data
+  - `src/utils/demo.tools.ts`:
+    - `getGuitars`: returns guitars with absolute `image` URLs built from `origin`
+    - `recommendGuitar`: returns a selected id (UI renders a card)
+  - `src/data/example-guitars.ts`: static demo dataset with relative `image` paths (e.g. `/example-guitar-...jpg`)
+
+- Image origin handling
+  - Server ensures absolute URLs via `origin` so the model doesn’t invent hosts
+  - Client Markdown components defensively normalize `<img src>` to the current `window.location.origin` for known guitar images
+
+- MCP demo (optional example)
+  - `src/utils/demo.sse.ts`: shows how an MCP server could expose a `getGuitars` tool over SSE. Not used by `/api/demo-chat`, but demonstrates the pattern.
+
+## Request/response flow
+
+```
+User types → Client sends POST /api/demo-chat with messages
+           → Server builds tools (origin-aware)
+           → AI model receives messages + tool schema
+           → Model may call tool: getGuitars{}
+           → Tool returns guitars[] with absolute image URLs
+           → Model composes Markdown + optional tool tags
+           → Server streams chunks → Client renders
+```
+
+### Detailed sequence
+
+1) Client
+```
+useChat({ api: "/api/demo-chat" })
+  └─ sendMessage({ text })
+     └─ POST messages to server
+```
+
+2) Server
+```
+POST /api/demo-chat
+  ├─ const origin = derive from X-Forwarded-*/URL
+  ├─ const tools = await getTools({ origin })
+  ├─ streamText({ model, messages, tools, system })
+  └─ return result.toUIMessageStreamResponse()
+```
+
+3) Tool execution (example)
+```
+getGuitars.execute()
+  └─ maps dataset → { ...guitar, image: `${origin}${guitar.image}` }
+  └─ returns JSON array
+```
+
+4) Client rendering
+```
+- Text parts → ReactMarkdown
+- Tool parts → custom UI (e.g., GuitarRecommendation)
+- Images → normalized to current host if needed
+```
+
+## Files map
+
+- Chat UI
+  - `src/routes/index.tsx`
+  - `src/components/example-AIAssistant.tsx`
+
+- AI/Server
+  - `src/routes/api.demo-chat.ts`
+  - `src/utils/demo.tools.ts`
+
+- Demo data & pages
+  - `src/data/example-guitars.ts`
+  - `src/routes/example.guitars/index.tsx`
+  - `src/routes/example.guitars/$guitarId.tsx`
+
+- Optional MCP demo
+  - `src/utils/demo.sse.ts`
+
+## How MCP-style tools fit (conceptually)
+
+- The server defines tool endpoints with schemas (name, input, execute)
+- The AI runtime (`streamText`) advertises these tools to the model
+- The model calls tools by name with inputs; the runtime invokes them
+- Outputs are streamed back as structured parts, which the client can render
+
+ASCII of tool invocation path:
+```
+Model ↔ streamText ↔ tools.execute(input)
+                      │
+                      ├─ read dataset
+                      └─ return JSON (absolute image URLs)
+```
+
+## Deployment notes
+
+- Ensure reverse proxy passes `X-Forwarded-Proto` and `X-Forwarded-Host` so `origin` is correct
+- Static images live in `public/` and are served by the host (Vite/adapter)
+- In dev, images resolve to `http://localhost:<port>/...`; in prod, to your domain
+
+## Local development
+
+```bash
+pnpm install
+pnpm start
+# open http://localhost:3000
+```
+
+## Prompting tips
+
+- Ask: "i will like to see the picture of all the guiter available"
+- The assistant will call `getGuitars`, render images with the correct host

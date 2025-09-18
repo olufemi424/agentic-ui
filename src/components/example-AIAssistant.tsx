@@ -56,32 +56,35 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
   }
 
   return (
-    <div ref={messagesContainerRef} className="flex-1 overflow-y-auto">
+    <div
+      ref={messagesContainerRef}
+      className="flex-1 overflow-y-auto chat-mini__messages"
+    >
       {messages.map(({ id, role, parts }) => (
         <div
           key={id}
-          className={`py-3 ${
+          className={`py-3 chat-mini__message ${
             role === "assistant"
-              ? "bg-gradient-to-r from-orange-500/5 to-red-600/5"
-              : "bg-transparent"
+              ? "chat-mini__message--assistant bg-gradient-to-r from-orange-500/5 to-red-600/5"
+              : "chat-mini__message--user bg-transparent"
           }`}
         >
           {parts.map((part) => {
             if (part.type === "text") {
               return (
-                <div className="flex items-start gap-2 px-4">
+                <div className="flex items-start gap-2 px-4 chat-mini__message-body">
                   {role === "assistant" ? (
-                    <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 flex items-center justify-center text-xs font-medium text-white flex-shrink-0">
+                    <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 flex items-center justify-center text-xs font-medium text-white flex-shrink-0 chat-mini__avatar chat-mini__avatar--assistant">
                       AI
                     </div>
                   ) : (
-                    <div className="w-6 h-6 rounded-lg bg-gray-700 flex items-center justify-center text-xs font-medium text-white flex-shrink-0">
+                    <div className="w-6 h-6 rounded-lg bg-gray-700 flex items-center justify-center text-xs font-medium text-white flex-shrink-0 chat-mini__avatar chat-mini__avatar--user">
                       Y
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 chat-mini__content">
                     <ReactMarkdown
-                      className="prose dark:prose-invert max-w-none prose-sm"
+                      className="prose dark:prose-invert max-w-none prose-sm chat-mini__markdown"
                       rehypePlugins={[
                         rehypeRaw,
                         rehypeSanitize,
@@ -106,7 +109,10 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
               (part.output as { id: string })?.id
             ) {
               return (
-                <div key={id} className="max-w-[80%] mx-auto">
+                <div
+                  key={id}
+                  className="max-w-[80%] mx-auto chat-mini__tool-card chat-mini__tool-card--recommend-guitar"
+                >
                   <GuitarRecommendation
                     id={(part.output as { id: string })?.id}
                   />
@@ -130,10 +136,10 @@ export default function AIAssistant() {
   const [input, setInput] = useState("");
 
   return (
-    <div className="relative z-50">
+    <div className="relative z-50 chat-mini">
       <button
         onClick={() => showAIAssistant.setState((state) => !state)}
-        className="flex items-center gap-2 px-3 py-1 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white hover:opacity-90 transition-opacity"
+        className="flex items-center gap-2 px-3 py-1 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white hover:opacity-90 transition-opacity chat-mini__toggle"
       >
         <div className="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-xs font-medium">
           AI
@@ -142,12 +148,12 @@ export default function AIAssistant() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-[700px] h-[600px] bg-gray-900 rounded-lg shadow-xl border border-orange-500/20 flex flex-col">
-          <div className="flex items-center justify-between p-3 border-b border-orange-500/20">
+        <div className="absolute top-full right-0 mt-2 w-[700px] h-[600px] bg-gray-900 rounded-lg shadow-xl border border-orange-500/20 flex flex-col chat-mini__panel">
+          <div className="flex items-center justify-between p-3 border-b border-orange-500/20 chat-mini__panel-header">
             <h3 className="font-semibold text-white">AI Assistant</h3>
             <button
               onClick={() => showAIAssistant.setState((state) => !state)}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-white transition-colors chat-mini__close"
             >
               <X className="w-4 h-4" />
             </button>
@@ -155,7 +161,7 @@ export default function AIAssistant() {
 
           <Messages messages={messages} />
 
-          <div className="p-3 border-t border-orange-500/20">
+          <div className="p-3 border-t border-orange-500/20 chat-mini__footer">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -163,12 +169,12 @@ export default function AIAssistant() {
                 setInput("");
               }}
             >
-              <div className="relative">
+              <div className="relative chat-mini__controls">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Type your message..."
-                  className="w-full rounded-lg border border-orange-500/20 bg-gray-800/50 pl-3 pr-10 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none overflow-hidden"
+                  className="w-full rounded-lg border border-orange-500/20 bg-gray-800/50 pl-3 pr-10 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none overflow-hidden chat-mini__input"
                   rows={1}
                   style={{ minHeight: "36px", maxHeight: "120px" }}
                   onInput={(e) => {
@@ -188,7 +194,7 @@ export default function AIAssistant() {
                 <button
                   type="submit"
                   disabled={!input.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-orange-500 hover:text-orange-400 disabled:text-gray-500 transition-colors focus:outline-none"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-orange-500 hover:text-orange-400 disabled:text-gray-500 transition-colors focus:outline-none chat-mini__send"
                 >
                   <Send className="w-4 h-4" />
                 </button>

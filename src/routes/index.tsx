@@ -42,8 +42,8 @@ function normalizeImageSrc(src?: string): string | undefined {
 
 function InitalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex-1 flex items-center justify-center px-4">
-      <div className="text-center max-w-3xl mx-auto w-full">
+    <div className="flex-1 flex items-center justify-center px-4 chat__initial">
+      <div className="text-center max-w-3xl mx-auto w-full chat__initial-inner">
         <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-orange-500 to-red-600 text-transparent bg-clip-text uppercase">
           <span className="text-white">TanStack</span> Chat
         </h1>
@@ -59,7 +59,7 @@ function InitalLayout({ children }: { children: React.ReactNode }) {
 
 function ChattingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute bottom-0 right-0 left-64 bg-gray-900/80 backdrop-blur-sm border-t border-orange-500/10">
+    <div className="absolute bottom-0 right-0 left-64 bg-gray-900/80 backdrop-blur-sm border-t border-orange-500/10 chat__footer">
       <div className="max-w-3xl mx-auto w-full px-4 py-3">{children}</div>
     </div>
   );
@@ -80,34 +80,37 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
   }
 
   return (
-    <div ref={messagesContainerRef} className="flex-1 overflow-y-auto pb-24">
+    <div
+      ref={messagesContainerRef}
+      className="flex-1 overflow-y-auto pb-24 chat__messages"
+    >
       <div className="max-w-3xl mx-auto w-full px-4">
         {messages.map(({ id, role, parts }) => (
           <div
             key={id}
-            className={`p-4 ${
+            className={`p-4 chat__message ${
               role === "assistant"
-                ? "bg-gradient-to-r from-orange-500/5 to-red-600/5"
-                : "bg-transparent"
+                ? "chat__message--assistant bg-gradient-to-r from-orange-500/5 to-red-600/5"
+                : "chat__message--user bg-transparent"
             }`}
           >
-            <div className="flex items-start gap-4 max-w-3xl mx-auto w-full">
+            <div className="flex items-start gap-4 max-w-3xl mx-auto w-full chat__message-body">
               {role === "assistant" ? (
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 mt-2 flex items-center justify-center text-sm font-medium text-white flex-shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 mt-2 flex items-center justify-center text-sm font-medium text-white flex-shrink-0 chat__avatar chat__avatar--assistant">
                   AI
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-sm font-medium text-white flex-shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-sm font-medium text-white flex-shrink-0 chat__avatar chat__avatar--user">
                   Y
                 </div>
               )}
-              <div className="flex-1">
+              <div className="flex-1 chat__content">
                 {parts.map((part, index) => {
                   if (part.type === "text") {
                     return (
                       <div className="flex-1 min-w-0" key={index}>
                         <ReactMarkdown
-                          className="prose dark:prose-invert max-w-none"
+                          className="prose dark:prose-invert max-w-none chat__markdown"
                           rehypePlugins={[
                             rehypeRaw,
                             rehypeSanitize,
@@ -122,7 +125,7 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                         >
                           {part.text}
                         </ReactMarkdown>
-                        <div className="flex justify-end mt-2">
+                        <div className="flex justify-end mt-2 chat__tts">
                           <TTSButton
                             text={
                               parts
@@ -141,7 +144,10 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                     (part.output as { id: string })?.id
                   ) {
                     return (
-                      <div key={index} className="max-w-[80%] mx-auto">
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--recommend-guitar"
+                      >
                         <GuitarRecommendation
                           id={(part.output as { id: string })?.id}
                         />
@@ -171,24 +177,25 @@ function ChatPage() {
   const Layout = messages.length ? ChattingLayout : InitalLayout;
 
   return (
-    <div className="relative flex h-[calc(100vh-32px)] bg-gray-900">
-      <div className="flex-1 flex flex-col">
+    <div className="relative flex h-[calc(100vh-32px)] bg-gray-900 chat">
+      <div className="flex-1 flex flex-col chat__panel">
         <Messages messages={messages} />
 
         <Layout>
           <form
+            className="chat__form"
             onSubmit={(e) => {
               e.preventDefault();
               sendMessage({ text: input });
               setInput("");
             }}
           >
-            <div className="flex space-x-3 max-w-xl mx-auto">
+            <div className="flex space-x-3 max-w-xl mx-auto chat__controls">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type something clever (or don't, we won't judge)..."
-                className="w-full rounded-lg border border-orange-500/20 bg-gray-800/50 pl-4 pr-12 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none overflow-hidden shadow-lg"
+                className="w-full rounded-lg border border-orange-500/20 bg-gray-800/50 pl-4 pr-12 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none overflow-hidden shadow-lg chat__input"
                 rows={1}
                 style={{ minHeight: "44px", maxHeight: "200px" }}
                 onInput={(e) => {
@@ -206,16 +213,18 @@ function ChatPage() {
                 }}
               />
               {isClient ? (
-                <Suspense fallback={null}>
-                  <TranscribeButton
-                    onTranscribe={(text) => setInput(`${input} ${text}`)}
-                  />
-                </Suspense>
+                <div className="chat__mic">
+                  <Suspense fallback={null}>
+                    <TranscribeButton
+                      onTranscribe={(text) => setInput(`${input} ${text}`)}
+                    />
+                  </Suspense>
+                </div>
               ) : null}
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="p-2 text-orange-500 hover:text-orange-400 disabled:text-gray-500 transition-colors focus:outline-none"
+                className="p-2 text-orange-500 hover:text-orange-400 disabled:text-gray-500 transition-colors focus:outline-none chat__send"
               >
                 <Send className="w-4 h-4" />
               </button>
