@@ -12,6 +12,9 @@ import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
 
 import GuitarRecommendation from "@/components/example-GuitarRecommendation";
+import InvestmentAccountCard from "@/components/InvestmentAccountCard";
+import InvestmentInsightsCard from "@/components/InvestmentInsightsCard";
+import ItemCard from "@/components/example-ItemCard";
 const TranscribeButton = lazy(() => import("@/components/transcribe-button"));
 
 import "../demo.index.css";
@@ -111,11 +114,11 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                       <div className="flex-1 min-w-0" key={index}>
                         <ReactMarkdown
                           className="prose dark:prose-invert max-w-none chat__markdown"
+                          remarkPlugins={[remarkGfm]}
                           rehypePlugins={[
                             rehypeRaw,
                             rehypeSanitize,
                             rehypeHighlight,
-                            remarkGfm,
                           ]}
                           components={{
                             img: ({ src, ...props }) => (
@@ -151,6 +154,140 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                         <GuitarRecommendation
                           id={(part.output as { id: string })?.id}
                         />
+                      </div>
+                    );
+                  }
+                  if (
+                    part.type === "tool-listInvestments" &&
+                    part.state === "output-available" &&
+                    Array.isArray(part.output as any)
+                  ) {
+                    const accounts = (part.output as any[]) || [];
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--investments"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {accounts.map((acc, i) => (
+                            <InvestmentAccountCard key={i} account={acc} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (
+                    (part.type === "tool-createInvestmentAccount" ||
+                      part.type === "tool-updateInvestmentAccount") &&
+                    part.state === "output-available" &&
+                    part.output
+                  ) {
+                    const acc = part.output as any;
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--investment"
+                      >
+                        <InvestmentAccountCard account={acc} />
+                      </div>
+                    );
+                  }
+                  if (
+                    part.type === "tool-deleteInvestmentAccount" &&
+                    part.state === "output-available" &&
+                    part.output
+                  ) {
+                    const { success, id } = part.output as any;
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--delete"
+                      >
+                        <div
+                          className={`p-3 rounded-md text-sm ${success ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`}
+                        >
+                          {success
+                            ? `Investment account ${id} deleted.`
+                            : `Failed to delete investment account ${id}.`}
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (
+                    part.type === "tool-getInvestmentInsights" &&
+                    part.state === "output-available" &&
+                    part.output
+                  ) {
+                    const { totals, byInstitution, bySector, topHolding } =
+                      part.output as any;
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--insights"
+                      >
+                        <InvestmentInsightsCard
+                          totals={totals}
+                          byInstitution={byInstitution}
+                          bySector={bySector}
+                          topHolding={topHolding}
+                        />
+                      </div>
+                    );
+                  }
+                  if (
+                    (part.type === "tool-listItems" ||
+                      part.type === "tool-searchItems") &&
+                    part.state === "output-available" &&
+                    Array.isArray(part.output as any)
+                  ) {
+                    const items = (part.output as any[]) || [];
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--items"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {items.map((item, i) => (
+                            <ItemCard key={i} item={item} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (
+                    (part.type === "tool-recommendItem" ||
+                      part.type === "tool-createItem") &&
+                    part.state === "output-available" &&
+                    part.output
+                  ) {
+                    const item = part.output as any;
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--item"
+                      >
+                        <ItemCard item={item} />
+                      </div>
+                    );
+                  }
+                  if (
+                    part.type === "tool-deleteItem" &&
+                    part.state === "output-available" &&
+                    part.output
+                  ) {
+                    const { success, id } = part.output as any;
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--delete"
+                      >
+                        <div
+                          className={`p-3 rounded-md text-sm ${success ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`}
+                        >
+                          {success
+                            ? `Item ${id} deleted.`
+                            : `Failed to delete item ${id}.`}
+                        </div>
                       </div>
                     );
                   }

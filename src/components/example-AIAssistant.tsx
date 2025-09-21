@@ -11,6 +11,8 @@ import { DefaultChatTransport } from "ai";
 
 import { showAIAssistant } from "../store/example-assistant";
 import GuitarRecommendation from "./example-GuitarRecommendation";
+import InvestmentAccountCard from "./InvestmentAccountCard";
+import InvestmentInsightsCard from "./InvestmentInsightsCard";
 
 import type { UIMessage } from "ai";
 
@@ -85,11 +87,11 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                   <div className="flex-1 min-w-0 chat-mini__content">
                     <ReactMarkdown
                       className="prose dark:prose-invert max-w-none prose-sm chat-mini__markdown"
+                      remarkPlugins={[remarkGfm]}
                       rehypePlugins={[
                         rehypeRaw,
                         rehypeSanitize,
                         rehypeHighlight,
-                        remarkGfm,
                       ]}
                       components={{
                         img: ({ src, ...props }) => (
@@ -115,6 +117,61 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                 >
                   <GuitarRecommendation
                     id={(part.output as { id: string })?.id}
+                  />
+                </div>
+              );
+            }
+            if (
+              (part.type === "tool-listInvestments" ||
+                part.type === "tool-listItems" ||
+                part.type === "tool-searchItems") &&
+              part.state === "output-available" &&
+              Array.isArray(part.output as any)
+            ) {
+              const items = (part.output as any[]) || [];
+              return (
+                <div className="px-4">
+                  <div className="grid grid-cols-1 gap-3">
+                    {items.map((acc, i) =>
+                      // If it looks like an investment account, render accordingly
+                      acc &&
+                      acc.institution &&
+                      acc.accountType &&
+                      acc.balance !== undefined ? (
+                        <InvestmentAccountCard key={i} account={acc} />
+                      ) : null
+                    )}
+                  </div>
+                </div>
+              );
+            }
+            if (
+              (part.type === "tool-createInvestmentAccount" ||
+                part.type === "tool-updateInvestmentAccount") &&
+              part.state === "output-available" &&
+              part.output
+            ) {
+              const acc = part.output as any;
+              return (
+                <div className="px-4">
+                  <InvestmentAccountCard account={acc} />
+                </div>
+              );
+            }
+            if (
+              part.type === "tool-getInvestmentInsights" &&
+              part.state === "output-available" &&
+              part.output
+            ) {
+              const { totals, byInstitution, bySector, topHolding } =
+                part.output as any;
+              return (
+                <div className="px-4">
+                  <InvestmentInsightsCard
+                    totals={totals}
+                    byInstitution={byInstitution}
+                    bySector={bySector}
+                    topHolding={topHolding}
                   />
                 </div>
               );

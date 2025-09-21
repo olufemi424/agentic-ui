@@ -18,6 +18,8 @@ import { ServerRoute as ApiTtsServerRouteImport } from './routes/api.tts'
 import { ServerRoute as ApiTranscribeServerRouteImport } from './routes/api.transcribe'
 import { ServerRoute as ApiSseServerRouteImport } from './routes/api.sse'
 import { ServerRoute as ApiMessagesServerRouteImport } from './routes/api.messages'
+import { ServerRoute as ApiItemsServerRouteImport } from './routes/api.items'
+import { ServerRoute as ApiInvestmentsServerRouteImport } from './routes/api.investments'
 import { ServerRoute as ApiDemoChatServerRouteImport } from './routes/api.demo-chat'
 
 const rootServerRouteImport = createServerRootRoute()
@@ -57,6 +59,16 @@ const ApiMessagesServerRoute = ApiMessagesServerRouteImport.update({
   path: '/api/messages',
   getParentRoute: () => rootServerRouteImport,
 } as any)
+const ApiItemsServerRoute = ApiItemsServerRouteImport.update({
+  id: '/api/items',
+  path: '/api/items',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
+const ApiInvestmentsServerRoute = ApiInvestmentsServerRouteImport.update({
+  id: '/api/investments',
+  path: '/api/investments',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
 const ApiDemoChatServerRoute = ApiDemoChatServerRouteImport.update({
   id: '/api/demo-chat',
   path: '/api/demo-chat',
@@ -94,6 +106,8 @@ export interface RootRouteChildren {
 }
 export interface FileServerRoutesByFullPath {
   '/api/demo-chat': typeof ApiDemoChatServerRoute
+  '/api/investments': typeof ApiInvestmentsServerRoute
+  '/api/items': typeof ApiItemsServerRoute
   '/api/messages': typeof ApiMessagesServerRoute
   '/api/sse': typeof ApiSseServerRoute
   '/api/transcribe': typeof ApiTranscribeServerRoute
@@ -101,6 +115,8 @@ export interface FileServerRoutesByFullPath {
 }
 export interface FileServerRoutesByTo {
   '/api/demo-chat': typeof ApiDemoChatServerRoute
+  '/api/investments': typeof ApiInvestmentsServerRoute
+  '/api/items': typeof ApiItemsServerRoute
   '/api/messages': typeof ApiMessagesServerRoute
   '/api/sse': typeof ApiSseServerRoute
   '/api/transcribe': typeof ApiTranscribeServerRoute
@@ -109,6 +125,8 @@ export interface FileServerRoutesByTo {
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/demo-chat': typeof ApiDemoChatServerRoute
+  '/api/investments': typeof ApiInvestmentsServerRoute
+  '/api/items': typeof ApiItemsServerRoute
   '/api/messages': typeof ApiMessagesServerRoute
   '/api/sse': typeof ApiSseServerRoute
   '/api/transcribe': typeof ApiTranscribeServerRoute
@@ -118,6 +136,8 @@ export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
   fullPaths:
     | '/api/demo-chat'
+    | '/api/investments'
+    | '/api/items'
     | '/api/messages'
     | '/api/sse'
     | '/api/transcribe'
@@ -125,6 +145,8 @@ export interface FileServerRouteTypes {
   fileServerRoutesByTo: FileServerRoutesByTo
   to:
     | '/api/demo-chat'
+    | '/api/investments'
+    | '/api/items'
     | '/api/messages'
     | '/api/sse'
     | '/api/transcribe'
@@ -132,6 +154,8 @@ export interface FileServerRouteTypes {
   id:
     | '__root__'
     | '/api/demo-chat'
+    | '/api/investments'
+    | '/api/items'
     | '/api/messages'
     | '/api/sse'
     | '/api/transcribe'
@@ -140,6 +164,8 @@ export interface FileServerRouteTypes {
 }
 export interface RootServerRouteChildren {
   ApiDemoChatServerRoute: typeof ApiDemoChatServerRoute
+  ApiInvestmentsServerRoute: typeof ApiInvestmentsServerRoute
+  ApiItemsServerRoute: typeof ApiItemsServerRoute
   ApiMessagesServerRoute: typeof ApiMessagesServerRoute
   ApiSseServerRoute: typeof ApiSseServerRoute
   ApiTranscribeServerRoute: typeof ApiTranscribeServerRoute
@@ -201,6 +227,20 @@ declare module '@tanstack/react-start/server' {
       preLoaderRoute: typeof ApiMessagesServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
+    '/api/items': {
+      id: '/api/items'
+      path: '/api/items'
+      fullPath: '/api/items'
+      preLoaderRoute: typeof ApiItemsServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/api/investments': {
+      id: '/api/investments'
+      path: '/api/investments'
+      fullPath: '/api/investments'
+      preLoaderRoute: typeof ApiInvestmentsServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
     '/api/demo-chat': {
       id: '/api/demo-chat'
       path: '/api/demo-chat'
@@ -221,6 +261,8 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
   ApiDemoChatServerRoute: ApiDemoChatServerRoute,
+  ApiInvestmentsServerRoute: ApiInvestmentsServerRoute,
+  ApiItemsServerRoute: ApiItemsServerRoute,
   ApiMessagesServerRoute: ApiMessagesServerRoute,
   ApiSseServerRoute: ApiSseServerRoute,
   ApiTranscribeServerRoute: ApiTranscribeServerRoute,

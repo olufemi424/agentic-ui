@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "title": "Sample Item Alpha",
+    "description": "A seeded example item for the POC",
+    "tags": [
+      "example",
+      "alpha"
+    ],
+    "image": "/logo192.png",
+    "createdAt": "2025-09-20T03:56:59.408Z",
+    "updatedAt": "2025-09-20T03:56:59.408Z"
+  },
+  {
+    "id": "2",
+    "title": "Sample Item Beta",
+    "description": "Second seeded item",
+    "tags": [
+      "example",
+      "beta"
+    ],
+    "image": "/logo512.png",
+    "createdAt": "2025-09-20T03:56:59.408Z",
+    "updatedAt": "2025-09-20T03:56:59.408Z"
+  }
+]
