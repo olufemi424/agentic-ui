@@ -1,0 +1,54 @@
+[
+  {
+    "id": "acct-1",
+    "institution": "Charles Schwab",
+    "accountType": "Brokerage",
+    "name": "Growth",
+    "balance": 25000,
+    "holdings": [
+      {
+        "symbol": "AAPL",
+        "quantity": 10,
+        "avgPrice": 175,
+        "sector": "Technology"
+      },
+      {
+        "symbol": "MSFT",
+        "quantity": 5,
+        "avgPrice": 320,
+        "sector": "Technology"
+      },
+      {
+        "symbol": "VTI",
+        "quantity": 20,
+        "avgPrice": 210,
+        "sector": "Index"
+      }
+    ],
+    "createdAt": "2025-09-21T04:29:28.420Z",
+    "updatedAt": "2025-09-21T04:29:28.420Z"
+  },
+  {
+    "id": "acct-2",
+    "createdAt": "2025-09-21T04:31:08.199Z",
+    "updatedAt": "2025-09-21T04:31:52.189Z",
+    "institution": "Fidelity",
+    "accountType": "Roth IRA",
+    "name": "Retirement",
+    "balance": 1500,
+    "holdings": [
+      {
+        "symbol": "VOO",
+        "quantity": 15,
+        "avgPrice": 400,
+        "sector": "Index"
+      },
+      {
+        "symbol": "NVDA",
+        "quantity": 2,
+        "avgPrice": 650,
+        "sector": "Technology"
+      }
+    ]
+  }
+]

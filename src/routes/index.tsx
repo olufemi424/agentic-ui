@@ -12,6 +12,9 @@ import { DefaultChatTransport } from "ai";
 import type { UIMessage } from "ai";
 
 import GuitarRecommendation from "@/components/example-GuitarRecommendation";
+import InvestmentAccountCard from "@/components/InvestmentAccountCard";
+import InvestmentInsightsCard from "@/components/InvestmentInsightsCard";
+import ItemCard from "@/components/example-ItemCard";
 const TranscribeButton = lazy(() => import("@/components/transcribe-button"));
 
 import "../demo.index.css";
@@ -42,8 +45,8 @@ function normalizeImageSrc(src?: string): string | undefined {
 
 function InitalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex-1 flex items-center justify-center px-4">
-      <div className="text-center max-w-3xl mx-auto w-full">
+    <div className="flex-1 flex items-center justify-center px-4 chat__initial">
+      <div className="text-center max-w-3xl mx-auto w-full chat__initial-inner">
         <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-orange-500 to-red-600 text-transparent bg-clip-text uppercase">
           <span className="text-white">TanStack</span> Chat
         </h1>
@@ -59,7 +62,7 @@ function InitalLayout({ children }: { children: React.ReactNode }) {
 
 function ChattingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute bottom-0 right-0 left-64 bg-gray-900/80 backdrop-blur-sm border-t border-orange-500/10">
+    <div className="absolute bottom-0 right-0 left-64 bg-gray-900/80 backdrop-blur-sm border-t border-orange-500/10 chat__footer">
       <div className="max-w-3xl mx-auto w-full px-4 py-3">{children}</div>
     </div>
   );
@@ -80,39 +83,42 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
   }
 
   return (
-    <div ref={messagesContainerRef} className="flex-1 overflow-y-auto pb-24">
+    <div
+      ref={messagesContainerRef}
+      className="flex-1 overflow-y-auto pb-24 chat__messages"
+    >
       <div className="max-w-3xl mx-auto w-full px-4">
         {messages.map(({ id, role, parts }) => (
           <div
             key={id}
-            className={`p-4 ${
+            className={`p-4 chat__message ${
               role === "assistant"
-                ? "bg-gradient-to-r from-orange-500/5 to-red-600/5"
-                : "bg-transparent"
+                ? "chat__message--assistant bg-gradient-to-r from-orange-500/5 to-red-600/5"
+                : "chat__message--user bg-transparent"
             }`}
           >
-            <div className="flex items-start gap-4 max-w-3xl mx-auto w-full">
+            <div className="flex items-start gap-4 max-w-3xl mx-auto w-full chat__message-body">
               {role === "assistant" ? (
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 mt-2 flex items-center justify-center text-sm font-medium text-white flex-shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 mt-2 flex items-center justify-center text-sm font-medium text-white flex-shrink-0 chat__avatar chat__avatar--assistant">
                   AI
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-sm font-medium text-white flex-shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-sm font-medium text-white flex-shrink-0 chat__avatar chat__avatar--user">
                   Y
                 </div>
               )}
-              <div className="flex-1">
+              <div className="flex-1 chat__content">
                 {parts.map((part, index) => {
                   if (part.type === "text") {
                     return (
                       <div className="flex-1 min-w-0" key={index}>
                         <ReactMarkdown
-                          className="prose dark:prose-invert max-w-none"
+                          className="prose dark:prose-invert max-w-none chat__markdown"
+                          remarkPlugins={[remarkGfm]}
                           rehypePlugins={[
                             rehypeRaw,
                             rehypeSanitize,
                             rehypeHighlight,
-                            remarkGfm,
                           ]}
                           components={{
                             img: ({ src, ...props }) => (
@@ -122,7 +128,7 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                         >
                           {part.text}
                         </ReactMarkdown>
-                        <div className="flex justify-end mt-2">
+                        <div className="flex justify-end mt-2 chat__tts">
                           <TTSButton
                             text={
                               parts
@@ -141,10 +147,147 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                     (part.output as { id: string })?.id
                   ) {
                     return (
-                      <div key={index} className="max-w-[80%] mx-auto">
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--recommend-guitar"
+                      >
                         <GuitarRecommendation
                           id={(part.output as { id: string })?.id}
                         />
+                      </div>
+                    );
+                  }
+                  if (
+                    part.type === "tool-listInvestments" &&
+                    part.state === "output-available" &&
+                    Array.isArray(part.output as any)
+                  ) {
+                    const accounts = (part.output as any[]) || [];
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--investments"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {accounts.map((acc, i) => (
+                            <InvestmentAccountCard key={i} account={acc} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (
+                    (part.type === "tool-createInvestmentAccount" ||
+                      part.type === "tool-updateInvestmentAccount") &&
+                    part.state === "output-available" &&
+                    part.output
+                  ) {
+                    const acc = part.output as any;
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--investment"
+                      >
+                        <InvestmentAccountCard account={acc} />
+                      </div>
+                    );
+                  }
+                  if (
+                    part.type === "tool-deleteInvestmentAccount" &&
+                    part.state === "output-available" &&
+                    part.output
+                  ) {
+                    const { success, id } = part.output as any;
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--delete"
+                      >
+                        <div
+                          className={`p-3 rounded-md text-sm ${success ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`}
+                        >
+                          {success
+                            ? `Investment account ${id} deleted.`
+                            : `Failed to delete investment account ${id}.`}
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (
+                    part.type === "tool-getInvestmentInsights" &&
+                    part.state === "output-available" &&
+                    part.output
+                  ) {
+                    const { totals, byInstitution, bySector, topHolding } =
+                      part.output as any;
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--insights"
+                      >
+                        <InvestmentInsightsCard
+                          totals={totals}
+                          byInstitution={byInstitution}
+                          bySector={bySector}
+                          topHolding={topHolding}
+                        />
+                      </div>
+                    );
+                  }
+                  if (
+                    (part.type === "tool-listItems" ||
+                      part.type === "tool-searchItems") &&
+                    part.state === "output-available" &&
+                    Array.isArray(part.output as any)
+                  ) {
+                    const items = (part.output as any[]) || [];
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--items"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {items.map((item, i) => (
+                            <ItemCard key={i} item={item} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (
+                    (part.type === "tool-recommendItem" ||
+                      part.type === "tool-createItem") &&
+                    part.state === "output-available" &&
+                    part.output
+                  ) {
+                    const item = part.output as any;
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--item"
+                      >
+                        <ItemCard item={item} />
+                      </div>
+                    );
+                  }
+                  if (
+                    part.type === "tool-deleteItem" &&
+                    part.state === "output-available" &&
+                    part.output
+                  ) {
+                    const { success, id } = part.output as any;
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--delete"
+                      >
+                        <div
+                          className={`p-3 rounded-md text-sm ${success ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`}
+                        >
+                          {success
+                            ? `Item ${id} deleted.`
+                            : `Failed to delete item ${id}.`}
+                        </div>
                       </div>
                     );
                   }
@@ -171,24 +314,25 @@ function ChatPage() {
   const Layout = messages.length ? ChattingLayout : InitalLayout;
 
   return (
-    <div className="relative flex h-[calc(100vh-32px)] bg-gray-900">
-      <div className="flex-1 flex flex-col">
+    <div className="relative flex h-[calc(100vh-32px)] bg-gray-900 chat">
+      <div className="flex-1 flex flex-col chat__panel">
         <Messages messages={messages} />
 
         <Layout>
           <form
+            className="chat__form"
             onSubmit={(e) => {
               e.preventDefault();
               sendMessage({ text: input });
               setInput("");
             }}
           >
-            <div className="flex space-x-3 max-w-xl mx-auto">
+            <div className="flex space-x-3 max-w-xl mx-auto chat__controls">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type something clever (or don't, we won't judge)..."
-                className="w-full rounded-lg border border-orange-500/20 bg-gray-800/50 pl-4 pr-12 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none overflow-hidden shadow-lg"
+                className="w-full rounded-lg border border-orange-500/20 bg-gray-800/50 pl-4 pr-12 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none overflow-hidden shadow-lg chat__input"
                 rows={1}
                 style={{ minHeight: "44px", maxHeight: "200px" }}
                 onInput={(e) => {
@@ -206,16 +350,18 @@ function ChatPage() {
                 }}
               />
               {isClient ? (
-                <Suspense fallback={null}>
-                  <TranscribeButton
-                    onTranscribe={(text) => setInput(`${input} ${text}`)}
-                  />
-                </Suspense>
+                <div className="chat__mic">
+                  <Suspense fallback={null}>
+                    <TranscribeButton
+                      onTranscribe={(text) => setInput(`${input} ${text}`)}
+                    />
+                  </Suspense>
+                </div>
               ) : null}
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="p-2 text-orange-500 hover:text-orange-400 disabled:text-gray-500 transition-colors focus:outline-none"
+                className="p-2 text-orange-500 hover:text-orange-400 disabled:text-gray-500 transition-colors focus:outline-none chat__send"
               >
                 <Send className="w-4 h-4" />
               </button>
