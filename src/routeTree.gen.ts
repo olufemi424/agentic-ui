@@ -21,6 +21,7 @@ import { ServerRoute as ApiMessagesServerRouteImport } from './routes/api.messag
 import { ServerRoute as ApiItemsServerRouteImport } from './routes/api.items'
 import { ServerRoute as ApiInvestmentsServerRouteImport } from './routes/api.investments'
 import { ServerRoute as ApiDemoChatServerRouteImport } from './routes/api.demo-chat'
+import { ServerRoute as ApiInvestmentsIdServerRouteImport } from './routes/api.investments.$id'
 
 const rootServerRouteImport = createServerRootRoute()
 
@@ -74,6 +75,11 @@ const ApiDemoChatServerRoute = ApiDemoChatServerRouteImport.update({
   path: '/api/demo-chat',
   getParentRoute: () => rootServerRouteImport,
 } as any)
+const ApiInvestmentsIdServerRoute = ApiInvestmentsIdServerRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiInvestmentsServerRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -106,31 +112,34 @@ export interface RootRouteChildren {
 }
 export interface FileServerRoutesByFullPath {
   '/api/demo-chat': typeof ApiDemoChatServerRoute
-  '/api/investments': typeof ApiInvestmentsServerRoute
+  '/api/investments': typeof ApiInvestmentsServerRouteWithChildren
   '/api/items': typeof ApiItemsServerRoute
   '/api/messages': typeof ApiMessagesServerRoute
   '/api/sse': typeof ApiSseServerRoute
   '/api/transcribe': typeof ApiTranscribeServerRoute
   '/api/tts': typeof ApiTtsServerRoute
+  '/api/investments/$id': typeof ApiInvestmentsIdServerRoute
 }
 export interface FileServerRoutesByTo {
   '/api/demo-chat': typeof ApiDemoChatServerRoute
-  '/api/investments': typeof ApiInvestmentsServerRoute
+  '/api/investments': typeof ApiInvestmentsServerRouteWithChildren
   '/api/items': typeof ApiItemsServerRoute
   '/api/messages': typeof ApiMessagesServerRoute
   '/api/sse': typeof ApiSseServerRoute
   '/api/transcribe': typeof ApiTranscribeServerRoute
   '/api/tts': typeof ApiTtsServerRoute
+  '/api/investments/$id': typeof ApiInvestmentsIdServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/demo-chat': typeof ApiDemoChatServerRoute
-  '/api/investments': typeof ApiInvestmentsServerRoute
+  '/api/investments': typeof ApiInvestmentsServerRouteWithChildren
   '/api/items': typeof ApiItemsServerRoute
   '/api/messages': typeof ApiMessagesServerRoute
   '/api/sse': typeof ApiSseServerRoute
   '/api/transcribe': typeof ApiTranscribeServerRoute
   '/api/tts': typeof ApiTtsServerRoute
+  '/api/investments/$id': typeof ApiInvestmentsIdServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
@@ -142,6 +151,7 @@ export interface FileServerRouteTypes {
     | '/api/sse'
     | '/api/transcribe'
     | '/api/tts'
+    | '/api/investments/$id'
   fileServerRoutesByTo: FileServerRoutesByTo
   to:
     | '/api/demo-chat'
@@ -151,6 +161,7 @@ export interface FileServerRouteTypes {
     | '/api/sse'
     | '/api/transcribe'
     | '/api/tts'
+    | '/api/investments/$id'
   id:
     | '__root__'
     | '/api/demo-chat'
@@ -160,11 +171,12 @@ export interface FileServerRouteTypes {
     | '/api/sse'
     | '/api/transcribe'
     | '/api/tts'
+    | '/api/investments/$id'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
   ApiDemoChatServerRoute: typeof ApiDemoChatServerRoute
-  ApiInvestmentsServerRoute: typeof ApiInvestmentsServerRoute
+  ApiInvestmentsServerRoute: typeof ApiInvestmentsServerRouteWithChildren
   ApiItemsServerRoute: typeof ApiItemsServerRoute
   ApiMessagesServerRoute: typeof ApiMessagesServerRoute
   ApiSseServerRoute: typeof ApiSseServerRoute
@@ -248,8 +260,26 @@ declare module '@tanstack/react-start/server' {
       preLoaderRoute: typeof ApiDemoChatServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
+    '/api/investments/$id': {
+      id: '/api/investments/$id'
+      path: '/$id'
+      fullPath: '/api/investments/$id'
+      preLoaderRoute: typeof ApiInvestmentsIdServerRouteImport
+      parentRoute: typeof ApiInvestmentsServerRoute
+    }
   }
 }
+
+interface ApiInvestmentsServerRouteChildren {
+  ApiInvestmentsIdServerRoute: typeof ApiInvestmentsIdServerRoute
+}
+
+const ApiInvestmentsServerRouteChildren: ApiInvestmentsServerRouteChildren = {
+  ApiInvestmentsIdServerRoute: ApiInvestmentsIdServerRoute,
+}
+
+const ApiInvestmentsServerRouteWithChildren =
+  ApiInvestmentsServerRoute._addFileChildren(ApiInvestmentsServerRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -261,7 +291,7 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
   ApiDemoChatServerRoute: ApiDemoChatServerRoute,
-  ApiInvestmentsServerRoute: ApiInvestmentsServerRoute,
+  ApiInvestmentsServerRoute: ApiInvestmentsServerRouteWithChildren,
   ApiItemsServerRoute: ApiItemsServerRoute,
   ApiMessagesServerRoute: ApiMessagesServerRoute,
   ApiSseServerRoute: ApiSseServerRoute,

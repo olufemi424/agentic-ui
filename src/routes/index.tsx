@@ -14,6 +14,7 @@ import type { UIMessage } from "ai";
 import GuitarRecommendation from "@/components/example-GuitarRecommendation";
 import InvestmentAccountCard from "@/components/InvestmentAccountCard";
 import InvestmentInsightsCard from "@/components/InvestmentInsightsCard";
+import InvestmentActionCard from "@/components/InvestmentActionCard";
 import ItemCard from "@/components/example-ItemCard";
 const TranscribeButton = lazy(() => import("@/components/transcribe-button"));
 
@@ -62,7 +63,7 @@ function InitalLayout({ children }: { children: React.ReactNode }) {
 
 function ChattingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute bottom-0 right-0 left-64 bg-gray-900/80 backdrop-blur-sm border-t border-orange-500/10 chat__footer">
+    <div className="bottom-0 right-0 left-64 bg-gray-900/80 backdrop-blur-sm border-t border-orange-500/10 chat__footer">
       <div className="max-w-3xl mx-auto w-full px-4 py-3">{children}</div>
     </div>
   );
@@ -230,6 +231,31 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                           byInstitution={byInstitution}
                           bySector={bySector}
                           topHolding={topHolding}
+                        />
+                      </div>
+                    );
+                  }
+                  if (
+                    (part.type === "tool-proposeCreateInvestmentAccount" ||
+                      part.type === "tool-proposeUpdateInvestmentAccount" ||
+                      part.type === "tool-proposeDeleteInvestmentAccount") &&
+                    part.state === "output-available" &&
+                    part.output &&
+                    (part.output as any).type === "proposed-action"
+                  ) {
+                    const { action, payload } = part.output as any;
+                    return (
+                      <div
+                        key={index}
+                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--proposed"
+                      >
+                        <InvestmentActionCard
+                          action={action}
+                          payload={payload}
+                          onResult={(res) => {
+                            // no-op: UI will reflect via subsequent assistant message or we could optimistically append
+                          }}
+                          onCancel={() => {}}
                         />
                       </div>
                     );

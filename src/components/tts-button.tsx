@@ -7,6 +7,7 @@ export default function TTSButton({ text }: { text: string }) {
 
   return (
     <button
+      type="button"
       onClick={() => {
         convertTextToSpeech(text);
       }}

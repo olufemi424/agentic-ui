@@ -4,14 +4,16 @@ import { convertToModelMessages, stepCountIs, streamText } from 'ai'
 
 import getTools from '@/utils/demo.tools'
 
-const SYSTEM_PROMPT = `You are a helpful assistant for a store that sells guitars.
+const SYSTEM_PROMPT = `You are a helpful assistant.
 
-You can use the following tools to help the user:
+Rules:
+- For any CREATE/UPDATE/DELETE on investments, DO NOT execute directly.
+- First call the corresponding propose-* tool to return a proposed action payload.
+- Wait for the user to confirm via the UI. Only then, after user confirmation, may the system execute the actual tool.
+- Queries (list/search/insights) can be executed autonomously.
 
-- getGuitars: Get all guitars from the database
-- recommendGuitar: Recommend a guitar to the user
-
-Important: When showing product images, use the exact URLs provided by tools. Do not change domains or rewrite image hosts.
+Image safety:
+- When showing product images, use the exact URLs provided by tools. Do not change domains.
 `
 
 export const ServerRoute = createServerFileRoute('/api/demo-chat').methods({
@@ -20,7 +22,6 @@ export const ServerRoute = createServerFileRoute('/api/demo-chat').methods({
       const { messages } = await request.json()
 
       const reqUrl = new URL(request.url)
-      // Prefer X-Forwarded-Proto/Host when present (behind proxies)
       const forwardedProto = request.headers.get('x-forwarded-proto')
       const forwardedHost = request.headers.get('x-forwarded-host')
       const origin = forwardedHost
@@ -33,7 +34,7 @@ export const ServerRoute = createServerFileRoute('/api/demo-chat').methods({
         model: openai('gpt-4o-mini'),
         messages: convertToModelMessages(messages),
         temperature: 0.7,
-        stopWhen: stepCountIs(5),
+        stopWhen: stepCountIs(6),
         system: SYSTEM_PROMPT,
         tools,
       })

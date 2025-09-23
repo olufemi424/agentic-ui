@@ -13,6 +13,7 @@ import { showAIAssistant } from "../store/example-assistant";
 import GuitarRecommendation from "./example-GuitarRecommendation";
 import InvestmentAccountCard from "./InvestmentAccountCard";
 import InvestmentInsightsCard from "./InvestmentInsightsCard";
+import InvestmentActionCard from "./InvestmentActionCard";
 
 import type { UIMessage } from "ai";
 
@@ -176,6 +177,26 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                 </div>
               );
             }
+            if (
+              (part.type === "tool-proposeCreateInvestmentAccount" ||
+                part.type === "tool-proposeUpdateInvestmentAccount" ||
+                part.type === "tool-proposeDeleteInvestmentAccount") &&
+              part.state === "output-available" &&
+              part.output &&
+              (part.output as any).type === "proposed-action"
+            ) {
+              const { action, payload } = part.output as any;
+              return (
+                <div className="px-4">
+                  <InvestmentActionCard
+                    action={action}
+                    payload={payload}
+                    onResult={(_res) => {}}
+                    onCancel={() => {}}
+                  />
+                </div>
+              );
+            }
           })}
         </div>
       ))}
@@ -195,6 +216,7 @@ export default function AIAssistant() {
   return (
     <div className="relative z-50 chat-mini">
       <button
+        type="button"
         onClick={() => showAIAssistant.setState((state) => !state)}
         className="flex items-center gap-2 px-3 py-1 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white hover:opacity-90 transition-opacity chat-mini__toggle"
       >
@@ -209,6 +231,7 @@ export default function AIAssistant() {
           <div className="flex items-center justify-between p-3 border-b border-orange-500/20 chat-mini__panel-header">
             <h3 className="font-semibold text-white">AI Assistant</h3>
             <button
+              type="button"
               onClick={() => showAIAssistant.setState((state) => !state)}
               className="text-gray-400 hover:text-white transition-colors chat-mini__close"
             >

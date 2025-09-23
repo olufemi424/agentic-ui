@@ -104,7 +104,22 @@ export async function updateInvestmentAccount(id: string, patch: Partial<Omit<In
   const idx = all.findIndex((a) => a.id === id)
   if (idx === -1) return null
   const now = new Date().toISOString()
-  const updated = { ...all[idx], ...patch, updatedAt: now }
+  let base = all[idx]
+  // Support additive holdings via `addHoldings: Holding[]`
+  const addHoldings = (patch as any)?.addHoldings as any[] | undefined
+  if (Array.isArray(addHoldings) && addHoldings.length) {
+    const existing = Array.isArray(base.holdings) ? base.holdings : []
+    base = { ...base, holdings: [...existing, ...addHoldings] }
+  }
+  // Optional removal by symbols via `removeHoldingsSymbols: string[]`
+  const removeSymbols = (patch as any)?.removeHoldingsSymbols as string[] | undefined
+  if (Array.isArray(removeSymbols) && removeSymbols.length) {
+    const existing = Array.isArray(base.holdings) ? base.holdings : []
+    base = { ...base, holdings: existing.filter((h) => !removeSymbols.includes(h.symbol)) }
+  }
+  // Shallow merge the rest (excluding the two special keys)
+  const { addHoldings: _ah, removeHoldingsSymbols: _rhs, ...rest } = (patch as any) || {}
+  const updated = { ...base, ...rest, updatedAt: now }
   all[idx] = updated
   await writeAll(all)
   return updated

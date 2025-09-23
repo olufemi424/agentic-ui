@@ -1,14 +1,14 @@
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate } from "@tanstack/react-router";
 
-import { showAIAssistant } from '../store/example-assistant'
+import { showAIAssistant } from "../store/example-assistant";
 
-import guitars from '../data/example-guitars'
+import guitars from "../data/example-guitars";
 
 export default function GuitarRecommendation({ id }: { id: string }) {
-  const navigate = useNavigate()
-  const guitar = guitars.find((guitar) => guitar.id === +id)
+  const navigate = useNavigate();
+  const guitar = guitars.find((guitar) => guitar.id === +id);
   if (!guitar) {
-    return null
+    return null;
   }
   return (
     <div className="my-4 rounded-lg overflow-hidden border border-orange-500/20 bg-gray-800/50">
@@ -29,12 +29,13 @@ export default function GuitarRecommendation({ id }: { id: string }) {
             ${guitar.price}
           </div>
           <button
+            type="button"
             onClick={() => {
               navigate({
-                to: '/example/guitars/$guitarId',
+                to: "/example/guitars/$guitarId",
                 params: { guitarId: guitar.id.toString() },
-              })
-              showAIAssistant.setState(() => false)
+              });
+              showAIAssistant.setState(() => false);
             }}
             className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-1.5 rounded-lg text-sm hover:opacity-90 transition-opacity"
           >
@@ -43,5 +44,5 @@ export default function GuitarRecommendation({ id }: { id: string }) {
         </div>
       </div>
     </div>
-  )
+  );
 }

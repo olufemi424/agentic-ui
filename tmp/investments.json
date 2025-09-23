@@ -31,23 +31,40 @@
   {
     "id": "acct-2",
     "createdAt": "2025-09-21T04:31:08.199Z",
-    "updatedAt": "2025-09-21T04:31:52.189Z",
+    "updatedAt": "2025-09-23T04:49:40.650Z",
     "institution": "Fidelity",
     "accountType": "Roth IRA",
     "name": "Retirement",
     "balance": 1500,
     "holdings": [
       {
-        "symbol": "VOO",
-        "quantity": 15,
-        "avgPrice": 400,
-        "sector": "Index"
+        "symbol": "AAPL",
+        "quantity": 6,
+        "avgPrice": 175,
+        "sector": "Technology"
       },
       {
-        "symbol": "NVDA",
-        "quantity": 2,
-        "avgPrice": 650,
+        "symbol": "AMD",
+        "quantity": 500,
+        "avgPrice": 160,
         "sector": "Technology"
+      }
+    ]
+  },
+  {
+    "id": "acct-3",
+    "createdAt": "2025-09-21T07:07:05.401Z",
+    "updatedAt": "2025-09-23T03:30:46.280Z",
+    "institution": "Fidelity",
+    "accountType": "Custodial",
+    "name": "Custodial",
+    "balance": 4000,
+    "holdings": [
+      {
+        "symbol": "SPY",
+        "quantity": 5,
+        "avgPrice": 0,
+        "sector": "ETF"
       }
     ]
   }
