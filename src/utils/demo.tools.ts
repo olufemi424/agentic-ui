@@ -28,6 +28,38 @@ function toAbsolute(src: string | undefined, origin?: string) {
 }
 
 export default async function getTools({ origin }: { origin?: string } = {}) {
+  const HoldingItemInput = z.union([
+    z.object({
+      symbol: z.string(),
+      quantity: z.coerce.number(),
+      avgPrice: z.coerce.number(),
+      sector: z.string().optional(),
+    }),
+    z.string(),
+  ])
+  const normalizeHolding = (raw: any) => {
+    if (!raw) return null
+    if (typeof raw === 'string') {
+      // parse patterns like: "5 AAPL at 185" or "AAPL 5 @ 185"
+      const m = raw.match(/^(?:\s*(\d+(?:\.\d+)?))?\s*([A-Za-z]{1,8})\s*(?:at|@)?\s*(\d+(?:\.\d+)?)/i)
+      if (m) {
+        const qty = m[1] ? Number(m[1]) : NaN
+        const sym = m[2]
+        const price = Number(m[3])
+        if (!isNaN(qty) && sym && !isNaN(price)) return { symbol: sym.toUpperCase(), quantity: qty, avgPrice: price }
+      }
+      return null
+    }
+    const symbol = (raw.symbol || raw.ticker || '').toString().toUpperCase()
+    const quantity = raw.quantity ?? raw.qty
+    const avgPrice = raw.avgPrice ?? raw.price ?? raw.cost
+    const sector = raw.sector ? String(raw.sector) : undefined
+    const qn = Number(quantity)
+    const pn = Number(avgPrice)
+    if (!symbol || isNaN(qn) || isNaN(pn)) return null
+    return { symbol, quantity: qn, avgPrice: pn, sector }
+  }
+
   const withOrigin = {
     // Demo guitar tools (existing)
     getGuitars: tool({
@@ -110,24 +142,16 @@ export default async function getTools({ origin }: { origin?: string } = {}) {
         accountType: z.string().min(1),
         name: z.string().min(1),
         balance: z.number().optional(),
-        holdings: z
-          .array(
-            z.object({
-              symbol: z.string(),
-              quantity: z.number(),
-              avgPrice: z.number(),
-              sector: z.string().optional(),
-            }),
-          )
-          .optional(),
+        holdings: z.array(HoldingItemInput).optional(),
       }),
       execute: async ({ institution, accountType, name, balance = 0, holdings = [] }) => {
+        const normalized = (holdings || []).map(normalizeHolding).filter(Boolean) as any[]
         const created = await createInvestmentAccount({
           institution,
           accountType,
           name,
           balance,
-          holdings,
+          holdings: normalized,
         } as InvestmentAccount);
         return created as InvestmentAccount;
       },
@@ -179,6 +203,56 @@ export default async function getTools({ origin }: { origin?: string } = {}) {
       execute: async () => {
         const insights = await computeInsights();
         return insights;
+      },
+    }),
+
+    // Propose-only tools for human-in-the-loop
+    proposeCreateInvestmentAccount: tool({
+      description: "Propose creating an investment account (no side effects)",
+      inputSchema: z.object({
+        institution: z.string().min(1),
+        accountType: z.string().min(1),
+        name: z.string().min(1),
+        balance: z.union([z.number(), z.string()]).optional(),
+        holdings: z.array(HoldingItemInput).optional(),
+      }),
+      execute: async ({ institution, accountType, name, balance = 0, holdings = [] }) => {
+        const normalized = (holdings || []).map(normalizeHolding).filter(Boolean)
+        return {
+          type: 'proposed-action',
+          action: 'createInvestmentAccount',
+          payload: { institution, accountType, name, balance: Number(balance || 0), holdings: normalized },
+          requiresConfirmation: true,
+        }
+      },
+    }),
+
+    proposeUpdateInvestmentAccount: tool({
+      description: "Propose updating an investment account (no side effects)",
+      inputSchema: z.object({
+        id: z.string().min(1),
+        patch: z.object({}).passthrough(),
+      }),
+      execute: async ({ id, patch }) => {
+        return {
+          type: 'proposed-action',
+          action: 'updateInvestmentAccount',
+          payload: { id, patch },
+          requiresConfirmation: true,
+        }
+      },
+    }),
+
+    proposeDeleteInvestmentAccount: tool({
+      description: "Propose deleting an investment account (no side effects)",
+      inputSchema: z.object({ id: z.string().min(1) }),
+      execute: async ({ id }) => {
+        return {
+          type: 'proposed-action',
+          action: 'deleteInvestmentAccount',
+          payload: { id },
+          requiresConfirmation: true,
+        }
       },
     }),
   } as const;

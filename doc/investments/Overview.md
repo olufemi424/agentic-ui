@@ -55,6 +55,9 @@ interface InvestmentAccount {
 - Insights cards: pie chart (allocation), bar chart (sectors), key stats
 - CRUD feedback: status chips (created/updated/deleted)
 
+### See Also
+- Chat Overview slides with ASCII diagrams: `doc/investments/ChatOverview.md`
+
 ## Non-Goals (POC)
 - Real brokerage connectivity or order execution
 - Real-time market data; use static prices or small mocked updates

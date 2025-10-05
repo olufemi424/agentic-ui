@@ -8,4 +8,10 @@ declare module 'path' {
   export default _default
 }
 
+declare module 'os' {
+  export function tmpdir(): string
+  const _default: any
+  export default _default
+}
+
 declare var process: any

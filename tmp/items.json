@@ -22,5 +22,17 @@
     "image": "/logo512.png",
     "createdAt": "2025-09-20T03:56:59.408Z",
     "updatedAt": "2025-09-20T03:56:59.408Z"
+  },
+  {
+    "id": "3",
+    "createdAt": "2025-09-23T01:39:21.363Z",
+    "updatedAt": "2025-09-23T01:39:21.363Z",
+    "title": "Investment Projection",
+    "description": "Future value calculation of investments by 2025.",
+    "tags": [
+      "investment",
+      "projection"
+    ],
+    "image": "N/A"
   }
 ]
