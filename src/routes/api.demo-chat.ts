@@ -30,10 +30,27 @@ export const ServerRoute = createServerFileRoute('/api/demo-chat').methods({
 
       const tools = await getTools({ origin })
 
+      // Step 4: detect optional metadata in the latest user message text (best-effort)
+      // Example sent by client: "__meta__ {\"models\":[...],\"temperature\":0.8}"
+      let temperatureOverride: number | undefined
+      try {
+        const last = Array.isArray(messages) ? messages[messages.length - 1] : null
+        const lastText: string | undefined = last?.content?.find?.((p: any) => p.type === 'text')?.text
+        if (typeof lastText === 'string' && lastText.startsWith('__meta__')) {
+          const jsonStart = lastText.indexOf('{')
+          if (jsonStart >= 0) {
+            const meta = JSON.parse(lastText.slice(jsonStart))
+            if (typeof meta?.temperature === 'number') {
+              temperatureOverride = meta.temperature
+            }
+          }
+        }
+      } catch {}
+
       const result = await streamText({
         model: openai('gpt-4o-mini'),
         messages: convertToModelMessages(messages),
-        temperature: 0.7,
+        temperature: typeof temperatureOverride === 'number' ? temperatureOverride : 0.7,
         stopWhen: stepCountIs(6),
         system: SYSTEM_PROMPT,
         tools,

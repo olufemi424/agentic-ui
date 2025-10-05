@@ -40,7 +40,13 @@ function normalizeImageSrc(src?: string): string | undefined {
   }
 }
 
-function Messages({ messages }: { messages: Array<UIMessage> }) {
+function Messages({
+  messages,
+  onActionResult,
+}: {
+  messages: Array<UIMessage>;
+  onActionResult?: (action: string, result: unknown) => void;
+}) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,6 +68,16 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
     <div
       ref={messagesContainerRef}
       className="flex-1 overflow-y-auto chat-mini__messages"
+      onKeyDown={(e) => {
+        const target = e.target as HTMLElement;
+        const isInput =
+          target instanceof HTMLInputElement ||
+          target instanceof HTMLTextAreaElement;
+        if (isInput && e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
     >
       {messages.map(({ id, role, parts }) => (
         <div
@@ -191,7 +207,11 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                   <InvestmentActionCard
                     action={action}
                     payload={payload}
-                    onResult={(_res) => {}}
+                    onResult={(res) => {
+                      try {
+                        onActionResult?.(action, res);
+                      } catch {}
+                    }}
                     onCancel={() => {}}
                   />
                 </div>
@@ -212,6 +232,32 @@ export default function AIAssistant() {
     }),
   });
   const [input, setInput] = useState("");
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const onSubmit = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    const onClick = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const submitBtn = target.closest('button[type="submit"]');
+      const anchor = target.closest("a[href]");
+      if (submitBtn || (anchor && !anchor.getAttribute("data-allow-nav"))) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    el.addEventListener("submit", onSubmit, { capture: true });
+    el.addEventListener("click", onClick, { capture: true });
+    return () => {
+      el.removeEventListener("submit", onSubmit, { capture: true } as any);
+      el.removeEventListener("click", onClick, { capture: true } as any);
+    };
+  }, []);
 
   return (
     <div className="relative z-50 chat-mini">
@@ -227,7 +273,10 @@ export default function AIAssistant() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-[700px] h-[600px] bg-gray-900 rounded-lg shadow-xl border border-orange-500/20 flex flex-col chat-mini__panel">
+        <div
+          ref={panelRef}
+          className="absolute top-full right-0 mt-2 w-[700px] h-[600px] bg-gray-900 rounded-lg shadow-xl border border-orange-500/20 flex flex-col chat-mini__panel"
+        >
           <div className="flex items-center justify-between p-3 border-b border-orange-500/20 chat-mini__panel-header">
             <h3 className="font-semibold text-white">AI Assistant</h3>
             <button
@@ -239,47 +288,58 @@ export default function AIAssistant() {
             </button>
           </div>
 
-          <Messages messages={messages} />
+          <Messages
+            messages={messages}
+            onActionResult={(action, res) => {
+              try {
+                const payload = {
+                  kind: "action_result",
+                  action,
+                  result: res,
+                } as const;
+                const text = `__action_result__ ${JSON.stringify(payload)}`;
+                sendMessage({ text });
+              } catch {}
+            }}
+          />
 
           <div className="p-3 border-t border-orange-500/20 chat-mini__footer">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                sendMessage({ text: input });
-                setInput("");
-              }}
-            >
-              <div className="relative chat-mini__controls">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Type your message..."
-                  className="w-full rounded-lg border border-orange-500/20 bg-gray-800/50 pl-3 pr-10 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none overflow-hidden chat-mini__input"
-                  rows={1}
-                  style={{ minHeight: "36px", maxHeight: "120px" }}
-                  onInput={(e) => {
-                    const target = e.target as HTMLTextAreaElement;
-                    target.style.height = "auto";
-                    target.style.height =
-                      Math.min(target.scrollHeight, 120) + "px";
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage({ text: input });
-                      setInput("");
-                    }
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={!input.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-orange-500 hover:text-orange-400 disabled:text-gray-500 transition-colors focus:outline-none chat-mini__send"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </div>
-            </form>
+            <div className="relative chat-mini__controls">
+              <textarea
+                id="chat-mini__input"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your message..."
+                className="w-full rounded-lg border border-orange-500/20 bg-gray-800/50 pl-3 pr-10 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none overflow-hidden chat-mini__input"
+                rows={1}
+                style={{ minHeight: "36px", maxHeight: "120px" }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = "auto";
+                  target.style.height =
+                    Math.min(target.scrollHeight, 120) + "px";
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage({ text: input });
+                    setInput("");
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (!input.trim()) return;
+                  sendMessage({ text: input });
+                  setInput("");
+                }}
+                disabled={!input.trim()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-orange-500 hover:text-orange-400 disabled:text-gray-500 transition-colors focus:outline-none chat-mini__send"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}

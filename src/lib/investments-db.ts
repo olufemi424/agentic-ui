@@ -19,8 +19,14 @@ export interface InvestmentAccount {
   updatedAt: string
 }
 
-const DB_DIR = path.join(process.cwd(), 'tmp')
+// Store outside the project root to avoid dev-server reloads when data mutates
+const TMP_BASE = (process?.env?.TMPDIR || process?.env?.TEMP || process?.env?.TMP || '/tmp') as string
+const DB_DIR = path.join(TMP_BASE, 'agentic-ui')
 const DB_FILE = path.join(DB_DIR, 'investments.json')
+
+export function getInvestmentsDbFilePath(): string {
+  return DB_FILE
+}
 
 async function ensureDb(): Promise<void> {
   await fs.mkdir(DB_DIR, { recursive: true })

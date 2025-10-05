@@ -23,6 +23,9 @@ function HoldingRow({
         onChange={(e) =>
           onChange({ ...row, symbol: e.target.value.toUpperCase() })
         }
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.preventDefault();
+        }}
       />
       <input
         className="bg-gray-900/60 border border-gray-700 rounded p-2"
@@ -30,6 +33,9 @@ function HoldingRow({
         type="number"
         value={row.quantity ?? ""}
         onChange={(e) => onChange({ ...row, quantity: Number(e.target.value) })}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.preventDefault();
+        }}
       />
       <input
         className="bg-gray-900/60 border border-gray-700 rounded p-2"
@@ -37,6 +43,9 @@ function HoldingRow({
         type="number"
         value={row.avgPrice ?? ""}
         onChange={(e) => onChange({ ...row, avgPrice: Number(e.target.value) })}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.preventDefault();
+        }}
       />
       <div className="flex gap-2">
         <input
@@ -44,6 +53,9 @@ function HoldingRow({
           placeholder="Sector"
           value={row.sector || ""}
           onChange={(e) => onChange({ ...row, sector: e.target.value })}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.preventDefault();
+          }}
         />
         <button
           type="button"
@@ -91,7 +103,11 @@ export default function InvestmentActionCard({
   // For update flow, choose whether to append new rows or replace all holdings
   const [patchMode, setPatchMode] = useState<"append" | "replace">("append");
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (e?: React.MouseEvent<HTMLButtonElement>) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     try {
       setBusy(true);
       setError(null);
@@ -153,7 +169,15 @@ export default function InvestmentActionCard({
   };
 
   return (
-    <div className="my-4 rounded-lg overflow-hidden border border-orange-500/20 bg-gray-800/50 p-4 text-gray-200">
+    <div
+      className="my-4 rounded-lg overflow-hidden border border-orange-500/20 bg-gray-800/50 p-4 text-gray-200"
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+    >
       <div className="text-sm text-gray-300 mb-2">
         Action requires confirmation
       </div>
@@ -253,6 +277,9 @@ export default function InvestmentActionCard({
                 /* ignore */
               }
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.preventDefault();
+            }}
           />
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -338,7 +365,15 @@ export default function InvestmentActionCard({
 
       {error ? <div className="text-red-400 text-sm mt-2">{error}</div> : null}
 
-      <div className="flex gap-2 mt-3">
+      <div
+        className="flex gap-2 mt-3"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+      >
         <button
           type="button"
           disabled={busy}

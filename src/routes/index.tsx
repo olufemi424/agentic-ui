@@ -20,6 +20,7 @@ const TranscribeButton = lazy(() => import("@/components/transcribe-button"));
 
 import "../demo.index.css";
 import TTSButton from "@/components/tts-button";
+import MultiModelPanel from "@/components/MultiModelPanel";
 
 function normalizeImageSrc(src?: string): string | undefined {
   if (!src) return src;
@@ -69,7 +70,13 @@ function ChattingLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Messages({ messages }: { messages: Array<UIMessage> }) {
+function Messages({
+  messages,
+  onActionResult,
+}: {
+  messages: Array<UIMessage>;
+  onActionResult?: (action: string, result: unknown) => void;
+}) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -87,6 +94,16 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
     <div
       ref={messagesContainerRef}
       className="flex-1 overflow-y-auto pb-24 chat__messages"
+      onKeyDown={(e) => {
+        const target = e.target as HTMLElement;
+        const isInput =
+          target instanceof HTMLInputElement ||
+          target instanceof HTMLTextAreaElement;
+        if (isInput && e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
     >
       <div className="max-w-3xl mx-auto w-full px-4">
         {messages.map(({ id, role, parts }) => (
@@ -253,7 +270,9 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
                           action={action}
                           payload={payload}
                           onResult={(res) => {
-                            // no-op: UI will reflect via subsequent assistant message or we could optimistically append
+                            try {
+                              onActionResult?.(action, res);
+                            } catch {}
                           }}
                           onCancel={() => {}}
                         />
@@ -329,6 +348,7 @@ function Messages({ messages }: { messages: Array<UIMessage> }) {
 
 function ChatPage() {
   const [isClient, setIsClient] = useState(false);
+  const chatRootRef = useRef<HTMLDivElement>(null);
   useEffect(() => setIsClient(true), []);
   const { messages, sendMessage } = useChat({
     transport: new DefaultChatTransport({
@@ -339,20 +359,54 @@ function ChatPage() {
 
   const Layout = messages.length ? ChattingLayout : InitalLayout;
 
+  useEffect(() => {
+    const el = chatRootRef.current;
+    if (!el) return;
+    const onSubmit = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    const onClick = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const submitBtn = target.closest('button[type="submit"]');
+      const anchor = target.closest("a[href]");
+      if (submitBtn || (anchor && !anchor.getAttribute("data-allow-nav"))) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    el.addEventListener("submit", onSubmit, { capture: true });
+    el.addEventListener("click", onClick, { capture: true });
+    return () => {
+      el.removeEventListener("submit", onSubmit, { capture: true } as any);
+      el.removeEventListener("click", onClick, { capture: true } as any);
+    };
+  }, []);
+
   return (
-    <div className="relative flex h-[calc(100vh-32px)] bg-gray-900 chat">
+    <div
+      ref={chatRootRef}
+      className="relative flex h-[calc(100vh-32px)] bg-gray-900 chat"
+    >
       <div className="flex-1 flex flex-col chat__panel">
-        <Messages messages={messages} />
+        <Messages
+          messages={messages}
+          onActionResult={(action, res) => {
+            try {
+              const payload = {
+                kind: "action_result",
+                action,
+                result: res,
+              } as const;
+              const text = `__action_result__ ${JSON.stringify(payload)}`;
+              sendMessage({ text });
+            } catch {}
+          }}
+        />
 
         <Layout>
-          <form
-            className="chat__form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              sendMessage({ text: input });
-              setInput("");
-            }}
-          >
+          <div className="chat__form">
             <div className="flex space-x-3 max-w-xl mx-auto chat__controls">
               <textarea
                 value={input}
@@ -385,15 +439,33 @@ function ChatPage() {
                 </div>
               ) : null}
               <button
-                type="submit"
+                type="button"
+                onClick={() => {
+                  if (!input.trim()) return;
+                  sendMessage({ text: input });
+                  setInput("");
+                }}
                 disabled={!input.trim()}
                 className="p-2 text-orange-500 hover:text-orange-400 disabled:text-gray-500 transition-colors focus:outline-none chat__send"
               >
                 <Send className="w-4 h-4" />
               </button>
             </div>
-          </form>
+          </div>
         </Layout>
+        <div className="mt-6" />
+        <MultiModelPanel
+          onRun={({ models, temperature }) => {
+            try {
+              const meta = { models, temperature };
+              // Send a single chat turn enriched with metadata in text.
+              // Server will ignore this in Step 2.
+              const text = `__meta__ ${JSON.stringify(meta)}`;
+              sendMessage({ text });
+            } catch {}
+          }}
+          messages={messages as any}
+        />
       </div>
     </div>
   );

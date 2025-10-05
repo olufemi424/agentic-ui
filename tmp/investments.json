@@ -8,44 +8,25 @@
     "holdings": [
       {
         "symbol": "AAPL",
-        "quantity": 10,
-        "avgPrice": 175,
-        "sector": "Technology"
-      },
-      {
-        "symbol": "MSFT",
-        "quantity": 5,
-        "avgPrice": 320,
-        "sector": "Technology"
-      },
-      {
-        "symbol": "VTI",
-        "quantity": 20,
-        "avgPrice": 210,
-        "sector": "Index"
+        "quantity": 15,
+        "avgPrice": 175
       }
     ],
     "createdAt": "2025-09-21T04:29:28.420Z",
-    "updatedAt": "2025-09-21T04:29:28.420Z"
+    "updatedAt": "2025-10-02T05:06:27.285Z"
   },
   {
     "id": "acct-2",
     "createdAt": "2025-09-21T04:31:08.199Z",
-    "updatedAt": "2025-09-23T04:49:40.650Z",
+    "updatedAt": "2025-09-23T18:20:14.074Z",
     "institution": "Fidelity",
     "accountType": "Roth IRA",
     "name": "Retirement",
     "balance": 1500,
     "holdings": [
       {
-        "symbol": "AAPL",
-        "quantity": 6,
-        "avgPrice": 175,
-        "sector": "Technology"
-      },
-      {
         "symbol": "AMD",
-        "quantity": 500,
+        "quantity": 200,
         "avgPrice": 160,
         "sector": "Technology"
       }
@@ -54,7 +35,7 @@
   {
     "id": "acct-3",
     "createdAt": "2025-09-21T07:07:05.401Z",
-    "updatedAt": "2025-09-23T03:30:46.280Z",
+    "updatedAt": "2025-09-23T18:09:45.135Z",
     "institution": "Fidelity",
     "accountType": "Custodial",
     "name": "Custodial",
@@ -62,7 +43,7 @@
     "holdings": [
       {
         "symbol": "SPY",
-        "quantity": 5,
+        "quantity": 6,
         "avgPrice": 0,
         "sector": "ETF"
       }
