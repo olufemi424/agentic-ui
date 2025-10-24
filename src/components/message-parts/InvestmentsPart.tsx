@@ -1,14 +1,6 @@
 import React from "react";
 import InvestmentAccountCard from "../InvestmentAccountCard";
-
-interface InvestmentAccount {
-  id: string;
-  name: string;
-  institution: string;
-  accountType: string;
-  balance: number;
-  holdings?: Array<{ symbol: string; quantity: number; avgPrice: number }>;
-}
+import type { InvestmentAccount } from "@/lib/investments-db";
 
 export const InvestmentsPart = React.memo(
   ({ accounts }: { accounts: InvestmentAccount[] }) => {
