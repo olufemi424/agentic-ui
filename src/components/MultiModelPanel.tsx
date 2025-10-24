@@ -195,13 +195,13 @@ export default function MultiModelPanel({
           </div>
         ) : null}
 
-        <div className="multi-model-panel__footer mt-4 flex items-center justify-between">
-          <div className="multi-model-panel__selected-info text-xs text-gray-400">
+        <div className="mt-4 flex items-center justify-between">
+          <div className="text-xs text-gray-400">
             Selected: {selectedIds.length ? selectedIds.join(", ") : "None"}
           </div>
           <button
             type="button"
-            className="multi-model-panel__run-button bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-1.5 rounded-lg text-sm hover:opacity-90 transition-opacity"
+            className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-4 py-1.5 rounded-lg text-sm hover:opacity-90 transition-opacity"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -224,10 +224,10 @@ export default function MultiModelPanel({
         </div>
 
         {process.env.NODE_ENV !== "production" && lastRun?.models.length ? (
-          <div className="multi-model-panel__dev-actions mt-2 flex gap-2 text-xs">
+          <div className="mt-2 flex gap-2 text-xs">
             <button
               type="button"
-              className="multi-model-panel__dev-action multi-model-panel__dev-action--error bg-red-600/80 hover:bg-red-600 text-white px-2 py-1 rounded"
+              className="bg-red-600/80 hover:bg-red-600 text-white px-2 py-1 rounded"
               onClick={() => {
                 const id = lastRun.models[0];
                 setStatusByModel((s) => ({
@@ -240,7 +240,7 @@ export default function MultiModelPanel({
             </button>
             <button
               type="button"
-              className="multi-model-panel__dev-action multi-model-panel__dev-action--done bg-emerald-700/80 hover:bg-emerald-700 text-white px-2 py-1 rounded"
+              className="bg-emerald-700/80 hover:bg-emerald-700 text-white px-2 py-1 rounded"
               onClick={() => {
                 setStatusByModel((s) => {
                   const next = { ...s };
@@ -257,9 +257,9 @@ export default function MultiModelPanel({
 
         {lastRun && lastRun.models.length ? (
           <div
-            className={`multi-model-panel__results-wrapper mt-6 ${compact ? "max-h-[60vh] overflow-y-auto pr-1" : ""}`}
+            className={`mt-6 ${compact ? "max-h-[60vh] overflow-y-auto pr-1" : ""}`}
           >
-            <div className="multi-model-panel__results grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {lastRun.models.map((mid) => (
                 <ModelResultCard
                   key={mid}

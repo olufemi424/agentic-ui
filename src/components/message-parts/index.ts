@@ -1,0 +1,5 @@
+export { MessageTextPart } from './MessageTextPart'
+export { GuitarPart } from './GuitarPart'
+export { InvestmentsPart } from './InvestmentsPart'
+export { ItemsPart } from './ItemsPart'
+export { ProposedActionPart } from './ProposedActionPart'

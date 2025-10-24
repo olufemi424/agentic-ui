@@ -1,49 +1,25 @@
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Send } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
-import rehypeHighlight from "rehype-highlight";
-import remarkGfm from "remark-gfm";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 
 import type { UIMessage } from "ai";
 
-import GuitarRecommendation from "@/components/example-GuitarRecommendation";
+import {
+  MessageTextPart,
+  GuitarPart,
+  InvestmentsPart,
+  ItemsPart,
+  ProposedActionPart,
+} from "@/components/message-parts";
 import InvestmentAccountCard from "@/components/InvestmentAccountCard";
 import InvestmentInsightsCard from "@/components/InvestmentInsightsCard";
-import InvestmentActionCard from "@/components/InvestmentActionCard";
 import ItemCard from "@/components/example-ItemCard";
 const TranscribeButton = lazy(() => import("@/components/transcribe-button"));
 
 import "../demo.index.css";
-import TTSButton from "@/components/tts-button";
 import MultiModelPanel from "@/components/MultiModelPanel";
-
-function normalizeImageSrc(src?: string): string | undefined {
-  if (!src) return src;
-  try {
-    const base =
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "http://localhost";
-    const url = new URL(src, base);
-    const filename = url.pathname.split("/").pop() || "";
-    const isGuitarImage = /^example-guitar-.*\.(jpg|jpeg|png|webp)$/i.test(
-      filename
-    );
-    if (isGuitarImage) {
-      const origin =
-        typeof window !== "undefined" ? window.location.origin : url.origin;
-      return `${origin}/${filename}`;
-    }
-    return url.href;
-  } catch {
-    return src;
-  }
-}
 
 function InitalLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -80,9 +56,17 @@ function Messages({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
+    const el = messagesContainerRef.current;
+    if (!el) return;
+
+    // Only scroll if user is near bottom (within 100px)
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+
+    if (isNearBottom) {
+      el.scrollTo({
+        top: el.scrollHeight,
+        behavior: "smooth",
+      });
     }
   }, [messages]);
 
@@ -128,36 +112,7 @@ function Messages({
               <div className="flex-1 chat__content">
                 {parts.map((part, index) => {
                   if (part.type === "text") {
-                    return (
-                      <div className="flex-1 min-w-0" key={index}>
-                        <ReactMarkdown
-                          className="prose dark:prose-invert max-w-none chat__markdown"
-                          remarkPlugins={[remarkGfm]}
-                          rehypePlugins={[
-                            rehypeRaw,
-                            rehypeSanitize,
-                            rehypeHighlight,
-                          ]}
-                          components={{
-                            img: ({ src, ...props }) => (
-                              <img src={normalizeImageSrc(src)} {...props} />
-                            ),
-                          }}
-                        >
-                          {part.text}
-                        </ReactMarkdown>
-                        <div className="flex justify-end mt-2 chat__tts">
-                          <TTSButton
-                            text={
-                              parts
-                                ?.filter((part) => part.type === "text")
-                                .map((part) => part.text)
-                                .join(" ") || ""
-                            }
-                          />
-                        </div>
-                      </div>
-                    );
+                    return <MessageTextPart key={index} text={part.text} />;
                   }
                   if (
                     part.type === "tool-recommendGuitar" &&
@@ -165,14 +120,10 @@ function Messages({
                     (part.output as { id: string })?.id
                   ) {
                     return (
-                      <div
+                      <GuitarPart
                         key={index}
-                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--recommend-guitar"
-                      >
-                        <GuitarRecommendation
-                          id={(part.output as { id: string })?.id}
-                        />
-                      </div>
+                        id={(part.output as { id: string }).id}
+                      />
                     );
                   }
                   if (
@@ -180,18 +131,11 @@ function Messages({
                     part.state === "output-available" &&
                     Array.isArray(part.output as any)
                   ) {
-                    const accounts = (part.output as any[]) || [];
                     return (
-                      <div
+                      <InvestmentsPart
                         key={index}
-                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--investments"
-                      >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {accounts.map((acc, i) => (
-                            <InvestmentAccountCard key={i} account={acc} />
-                          ))}
-                        </div>
-                      </div>
+                        accounts={part.output as any[]}
+                      />
                     );
                   }
                   if (
@@ -262,21 +206,16 @@ function Messages({
                   ) {
                     const { action, payload } = part.output as any;
                     return (
-                      <div
+                      <ProposedActionPart
                         key={index}
-                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--proposed"
-                      >
-                        <InvestmentActionCard
-                          action={action}
-                          payload={payload}
-                          onResult={(res) => {
-                            try {
-                              onActionResult?.(action, res);
-                            } catch {}
-                          }}
-                          onCancel={() => {}}
-                        />
-                      </div>
+                        action={action}
+                        payload={payload}
+                        onResult={(res) => {
+                          try {
+                            onActionResult?.(action, res);
+                          } catch {}
+                        }}
+                      />
                     );
                   }
                   if (
@@ -285,18 +224,8 @@ function Messages({
                     part.state === "output-available" &&
                     Array.isArray(part.output as any)
                   ) {
-                    const items = (part.output as any[]) || [];
                     return (
-                      <div
-                        key={index}
-                        className="max-w-[80%] mx-auto chat__tool-card chat__tool-card--items"
-                      >
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {items.map((item, i) => (
-                            <ItemCard key={i} item={item} />
-                          ))}
-                        </div>
-                      </div>
+                      <ItemsPart key={index} items={part.output as any[]} />
                     );
                   }
                   if (
@@ -356,8 +285,35 @@ function ChatPage() {
     }),
   });
   const [input, setInput] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const rafRef = useRef<number>(null as unknown as number);
 
   const Layout = messages.length ? ChattingLayout : InitalLayout;
+
+  // Cleanup RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
+  // Debounced textarea height handler
+  const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const target = e.currentTarget;
+
+    // Cancel previous animation frame
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    // Batch DOM reads/writes
+    rafRef.current = requestAnimationFrame(() => {
+      target.style.height = "auto";
+      target.style.height = Math.min(target.scrollHeight, 200) + "px";
+    });
+  };
 
   useEffect(() => {
     const el = chatRootRef.current;
@@ -409,18 +365,14 @@ function ChatPage() {
           <div className="chat__form">
             <div className="flex space-x-3 max-w-xl mx-auto chat__controls">
               <textarea
+                ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type something clever (or don't, we won't judge)..."
                 className="w-full rounded-lg border border-orange-500/20 bg-gray-800/50 pl-4 pr-12 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none overflow-hidden shadow-lg chat__input"
                 rows={1}
                 style={{ minHeight: "44px", maxHeight: "200px" }}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement;
-                  target.style.height = "auto";
-                  target.style.height =
-                    Math.min(target.scrollHeight, 200) + "px";
-                }}
+                onInput={handleTextareaInput}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
